@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def evaluate_policy(env, policy, eval_episodes=10):
+def evaluate_policy(env, policy, eval_episodes=2):
     """
     Recive el entorno la politica y el número de episodios cada cuanto se
     evalua
@@ -22,12 +22,18 @@ def evaluate_policy(env, policy, eval_episodes=10):
 
     """
     avg_reward = 0
-    for _ in range(eval_episodes):
+    for episode in range(eval_episodes):
         obs = env.reset()
         done = False
+        print("episode", episode)
         while not done:
+            # print("obs array", np.array(obs))
+            # print("obs shape", obs.shape)
             action = policy.select_action(np.array(obs))
+            # print("action shape", action.shape)
             obs, reward, done, _ = env.step(action)
+            # print(obs, reward, done)
+
             avg_reward += reward
     avg_reward /= eval_episodes
     print("-------------------------------------------------")
