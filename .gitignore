@@ -9,6 +9,8 @@ __pycache__/
 
 tensorboard/**
 # cosas de este repo
+
+tensorboard/
 results/
 pytorch_models/
 exp/
