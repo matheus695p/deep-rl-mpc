@@ -55,27 +55,24 @@ for i in range(len(test_env.df)):
     action, _states = agent.predict(obs)
     obs, rewards, done, info = test_env.step(action)
     print(rewards)
-    test_env.render()
-    action_df = pd.DataFrame(action, columns=["rec_" + i for i in control_variables])
+    # every episode render the new environment
+    test_env.render()   
+    # states actions
+    action_df = pd.DataFrame(action, columns=["rec_" + i for i in control_variables])   
     obs_df = pd.DataFrame(obs, columns=features)
     rewards_df = pd.DataFrame([rewards], columns=["rewards"])
     real_value = pd.DataFrame([test_df.iloc[test_env.current_step]], columns=["value"])
 
     di = pd.concat([action_df, obs_df, rewards_df], axis=1)
     results = pd.concat([results, di], axis=0)
-    
-
 results.reset_index(drop=True, inplace=True)
-print("Average rewards: ", results["rewards"].mean(), "[%]")
 
+
+print("Average rewards: ", results["rewards"].mean(), "[%]")
 rec_control_variables = ["rec_" + i for i in control_variables]
-context_variables = test_env.context_variables
 results["optimized"] = test_env.model.predict(results[rec_control_variables + context_variables])
 results["prediction"] = test_env.model.predict(results[features])
-
 results["real"] = test_df[target]
-
 results["uplift"] = (results["optimized"] - results["real"]) / results["real"] * 100
-
 print("Uplift: ", results["uplift"].mean(), "[%]")
 
