@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from src.actor import Actor
 from src.critic import Critic
+
 # from src.replayBuffer import ReplayBuffer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device, "para hacer entrenamiento")
@@ -15,7 +16,6 @@ class TD3(object):
     paso4: Esta parte la puede cagar revisar al final
     # batch_states, batch_next_states, batch_actions,
     batch_rewards, batch_dones = replay_buffer.sample(batch_size)
-
 
     ...
 
@@ -98,9 +98,17 @@ class TD3(object):
         prediction = self.actor(state).cpu().data.numpy().flatten()
         return prediction
 
-    def train(self, replay_buffer, iterations, batch_size=100,
-              discount=0.99, tau=0.005, policy_noise=0.2,
-              noise_clipping=0.5, policy_freq=2):
+    def train(
+        self,
+        replay_buffer,
+        iterations,
+        batch_size=100,
+        discount=0.99,
+        tau=0.005,
+        policy_noise=0.2,
+        noise_clipping=0.5,
+        policy_freq=2,
+    ):
         """
         Método de entrenamiento
 
@@ -156,12 +164,10 @@ class TD3(object):
             # Paso 6: Añadimos ruido gaussiano a la siguiente acción a' y lo
             # cortamos para tenerlo en el rango de valores aceptado
             # por el entorno.
-            noise = torch.Tensor(batch_actions).data.normal_(
-                0, policy_noise).to(device)
+            noise = torch.Tensor(batch_actions).data.normal_(0, policy_noise).to(device)
             noise = noise.clamp(-noise_clipping, noise_clipping)
             # obtenemos siguiente acción
-            next_action = (
-                next_action + noise).clamp(-self.max_action, self.max_action)
+            next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
 
             # Paso 7: Los dos Críticos del Target toman un par (s’, a’)
             # como entrada y devuelven dos Q-values Qt1(s’,a’) y
@@ -176,7 +182,7 @@ class TD3(object):
             # Paso 9: Obtenemos el target final de los dos Crítico del Modelo,
             # que es: Qt = r + γ * min(Qt1, Qt2), donde γ es el factor de
             # descuento.
-            target_Q = reward + ((1-done) * discount * target_Q).detach()
+            target_Q = reward + ((1 - done) * discount * target_Q).detach()
 
             # Paso 10: Los dos Críticos del Modelo toman un par (s, a)
             # como entrada y devuelven dos Q-values Q1(s,a) y Q2(s,a)
@@ -186,8 +192,9 @@ class TD3(object):
             # Paso 11: Calculamos la pérdida procedente de los Crítico
             # del Modelo:
             # Critic Loss = MSE_Loss(Q1(s,a), Qt) + MSE_Loss(Q2(s,a), Qt)
-            critic_loss = F.mse_loss(
-                current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
+            critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(
+                current_Q2, target_Q
+            )
 
             # Paso 12: Propagamos hacia atrás la pérdida del crítico y
             # actualizamos los parámetros de los dos Crítico del Modelo con
@@ -208,20 +215,22 @@ class TD3(object):
                 # Paso 14: Todavía cada dos iteraciones, actualizamos
                 # los pesos del Actor del Target usando el promedio Polyak.
                 for param, target_param in zip(
-                        self.actor.parameters(),
-                        self.actor_target.parameters()):
+                    self.actor.parameters(), self.actor_target.parameters()
+                ):
 
                     target_param.data.copy_(
-                        tau * param.data + (1-tau) * target_param.data)
+                        tau * param.data + (1 - tau) * target_param.data
+                    )
 
                 # Paso 15: Todavía cada dos iteraciones, actualizamos los
                 # pesos del target del Crítico usando el promedio Polyak.
                 for param, target_param in zip(
-                        self.critic.parameters(),
-                        self.critic_target.parameters()):
+                    self.critic.parameters(), self.critic_target.parameters()
+                ):
 
                     target_param.data.copy_(
-                        tau * param.data + (1-tau) * target_param.data)
+                        tau * param.data + (1 - tau) * target_param.data
+                    )
 
     # Método para guardar el modelo entrenado
     def save(self, filename, directory):
@@ -239,10 +248,8 @@ class TD3(object):
         None.
 
         """
-        torch.save(self.actor.state_dict(), "%s/%s_actor.pth" %
-                   (directory, filename))
-        torch.save(self.critic.state_dict(), "%s/%s_critic.pth" %
-                   (directory, filename))
+        torch.save(self.actor.state_dict(), "%s/%s_actor.pth" % (directory, filename))
+        torch.save(self.critic.state_dict(), "%s/%s_critic.pth" % (directory, filename))
 
     # Método para cargar el modelo entrenado
     def load(self, filename, directory):
@@ -260,7 +267,9 @@ class TD3(object):
         None.
 
         """
-        self.actor.load_state_dict(torch.load(
-            "%s/%s_actor.pth" % (directory, filename)))
-        self.critic.load_state_dict(torch.load(
-            "%s/%s_critic.pth" % (directory, filename)))
+        self.actor.load_state_dict(
+            torch.load("%s/%s_actor.pth" % (directory, filename))
+        )
+        self.critic.load_state_dict(
+            torch.load("%s/%s_critic.pth" % (directory, filename))
+        )

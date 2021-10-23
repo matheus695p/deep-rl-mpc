@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+reshape = False
+
+
 class Critic(nn.Module):
     """
     Construimos una red neuronal para los criticos, se saca el número
@@ -37,7 +40,6 @@ class Critic(nn.Module):
         None.
 
         """
-        # herencia
         super(Critic, self).__init__()
         # Definir al arquitectura de los gemelos
 
@@ -72,8 +74,16 @@ class Critic(nn.Module):
         x2 : object
             red de segundo de criticos.
         """
+
+        if reshape:
+            batch_size = x.shape[0]
+            dim1 = 4
+            dim2 = 2
+            x = x.view(batch_size, dim1)
+            u = u.view(batch_size, dim2)
+
         # concatenación de estados y acciones
-        xu = torch.cat([x, u], 1)
+        xu = torch.cat([x, u], dim=1)
         # Propagación hacia adelante del primero de los Críticos
         x1 = F.relu(self.layer_1(xu))
         x1 = F.relu(self.layer_2(x1))
@@ -103,6 +113,14 @@ class Critic(nn.Module):
             valor Q solo del primero de los criticos.
 
         """
+        # TODO: BAD HARCODED
+        if reshape:
+            batch_size = x.shape[0]
+            dim1 = 4
+            dim2 = 2
+            x = x.view(batch_size, dim1)
+            u = u.view(batch_size, dim2)
+
         xu = torch.cat([x, u], 1)
         x1 = F.relu(self.layer_1(xu))
         x1 = F.relu(self.layer_2(x1))
