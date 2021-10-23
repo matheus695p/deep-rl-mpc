@@ -24,6 +24,7 @@ file_name = "%s_%s_%s" % ("TD3", env_name, str(seed))
 
 # dataframe training environment
 df = pd.read_csv("data/data_energy.csv")
+df = df.iloc[0:1000]
 
 # dataframe atributes
 target = "pe"
@@ -52,7 +53,7 @@ max_timesteps = 5e6
 save_models = True
 # Ruido de exploración: desviación estándar del ruido de exploración gaussiano
 expl_noise = 0.1
-batch_size = 100  # Tamaño del bloque
+batch_size = 1  # Tamaño del bloque
 # Factor de descuento gamma, utilizado en el cáclulo de la recompensa de
 # descuento total
 discount = 0.99
@@ -75,6 +76,8 @@ print(env.action_space.shape)
 print(env.observation_space)
 print(env.action_space)
 
+env._next_observation()
+
 # crear folders si no existe
 create_folders(save_models)
 
@@ -89,7 +92,9 @@ np.random.seed(seed)
 # traer desde el entorno los valores del espacio de acciones
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
-max_action = float(env.action_space.high[0])
+max_action = float(env.action_space.high[1])
+max_action = 100
+
 
 # crear la politica, replay buffer y como se van a evaluar
 policy = TD3(state_dim, action_dim, max_action)
@@ -113,6 +118,7 @@ t0 = time.time()
 # es para que existan antes del episodio cero
 episode_reward = 0
 episode_timesteps = 0
+
 
 # Iniciamos el bucle principal con un total de 500,000 timesteps
 while total_timesteps < max_timesteps:
@@ -159,15 +165,19 @@ while total_timesteps < max_timesteps:
     # Antes de los 10000 timesteps, ejectuamos acciones aleatorias
     if total_timesteps < start_timesteps:
         action = env.action_space.sample()
+        print("action:", action)
 
     else:  # Después de los 10000 timesteps, cambiamos al modelo
+        print("obs:", obs)
         action = policy.select_action(np.array(obs))
+        print("action:", action)
         # Si el valor de explore_noise no es 0, añadimos ruido a la acción
         # y lo recortamos en el rango adecuado
         if expl_noise != 0:
             action = (
                 action + np.random.normal(0, expl_noise, size=env.action_space.shape[0])
             ).clip(env.action_space.low, env.action_space.high)
+            print("action:", action)
 
     # El agente ejecuta una acción en el entorno y alcanza el siguiente
     # estado y una recompensa

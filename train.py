@@ -8,8 +8,9 @@ from gym import wrappers
 from src.td3 import TD3
 from src.replayBuffer import ReplayBuffer
 from src.evaluate import evaluate_policy
-from src.utils import (create_folders, mkdir)
+from src.utils import create_folders, mkdir
 from src.visualizations import training_td3_results
+
 warnings.filterwarnings("ignore")
 
 # Nombre del entorno (puedes indicar cualquier entorno continuo que
@@ -67,13 +68,10 @@ state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
 max_action = float(env.action_space.high[0])
 
-
 print(env.observation_space.shape)
 print(env.action_space.shape)
-
 print(env.observation_space)
 print(env.action_space)
-
 
 # crear la politica, replay buffer y como se van a evaluar
 policy = TD3(state_dim, action_dim, max_action)
@@ -81,22 +79,19 @@ replay_buffer = ReplayBuffer()
 evaluations = [evaluate_policy(env, policy)]
 
 # crear carpetas de monitoreo
-work_dir = mkdir('exp', 'brs')
-monitor_dir = mkdir(work_dir, 'monitor')
+work_dir = mkdir("exp", "brs")
+monitor_dir = mkdir(work_dir, "monitor")
 # máximo numéro de episodios
 max_episode_steps = env._max_episode_steps
-
 # inicializar las variables de entrenamiento
 total_timesteps = 0
 timesteps_since_eval = 0
 episode_num = 0
 done = True
 t0 = time.time()
-
 # es para que existan antes del episodio cero
 episode_reward = 0
 episode_timesteps = 0
-
 
 # Iniciamos el bucle principal con un total de 500,000 timesteps
 while total_timesteps < max_timesteps:
@@ -105,12 +100,22 @@ while total_timesteps < max_timesteps:
         # Si no estamos en la primera de las iteraciones, arrancamos
         # el proceso de entrenar el modelo
         if total_timesteps != 0:
-            print(f"Total Timesteps: {total_timesteps}",
-                  f"Episode Num: {episode_num}",
-                  f"Reward: {episode_reward}")
+            print(
+                f"Total Timesteps: {total_timesteps}",
+                f"Episode Num: {episode_num}",
+                f"Reward: {episode_reward}",
+            )
             # ajustar pesos de los actores y criticos
-            policy.train(replay_buffer, episode_timesteps, batch_size,
-                         discount, tau, policy_noise, noise_clip, policy_freq)
+            policy.train(
+                replay_buffer,
+                episode_timesteps,
+                batch_size,
+                discount,
+                tau,
+                policy_noise,
+                noise_clip,
+                policy_freq,
+            )
 
         # Evaluamos el episodio y guardamos la política si han pasado
         # las iteraciones necesarias
@@ -139,16 +144,15 @@ while total_timesteps < max_timesteps:
         # Si el valor de explore_noise no es 0, añadimos ruido a la acción
         # y lo recortamos en el rango adecuado
         if expl_noise != 0:
-            action = (action + np.random.normal(
-                0, expl_noise, size=env.action_space.shape[0])).clip(
-                env.action_space.low, env.action_space.high)
+            action = (
+                action + np.random.normal(0, expl_noise, size=env.action_space.shape[0])
+            ).clip(env.action_space.low, env.action_space.high)
 
     # El agente ejecuta una acción en el entorno y alcanza el siguiente
     # estado y una recompensa
     new_obs, reward, done, _ = env.step(action)
     # Comprobamos si el episodio ha terminado
-    done_bool = 0 if episode_timesteps + \
-        1 == env._max_episode_steps else float(done)
+    done_bool = 0 if episode_timesteps + 1 == env._max_episode_steps else float(done)
     # Incrementamos la recompensa total
     episode_reward += reward
     # Almacenamos la nueva transición en la memoria de repetición de
