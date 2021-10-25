@@ -13,8 +13,6 @@ from src.callbacks import SaveOnBestTrainingRewardCallback
 
 warnings.filterwarnings("ignore")
 
-### NEED TO CHANGE MODEL NAME AND mode.load WITH CORRESPONDANT AGENT
-
 # env settings
 seed = 0
 
